@@ -12,9 +12,6 @@ local closebutton = Instance.new("TextButton")
 local mini = Instance.new("TextButton")
 local mini2 = Instance.new("TextButton")
 
--- Nút bật/tắt fly ở ngoài frame
-local flyToggleBtn = Instance.new("TextButton")
-
 main.Name = "main"
 main.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 main.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -29,7 +26,6 @@ Frame.Size = UDim2.new(0, 190, 0, 57)
 Frame.Active = true
 Frame.Draggable = true
 
--- Các button trong frame
 up.Name = "up"
 up.Parent = Frame
 up.BackgroundColor3 = Color3.fromRGB(79, 255, 152)
@@ -64,7 +60,7 @@ TextLabel.BackgroundColor3 = Color3.fromRGB(242, 60, 255)
 TextLabel.Position = UDim2.new(0.469327301, 0, 0, 0)
 TextLabel.Size = UDim2.new(0, 100, 0, 28)
 TextLabel.Font = Enum.Font.SourceSans
-TextLabel.Text = "FLY GUI V3"
+TextLabel.Text = "FLY TAB"
 TextLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 TextLabel.TextScaled = true
 TextLabel.TextWrapped = true
@@ -130,17 +126,6 @@ mini2.TextSize = 40
 mini2.Position = UDim2.new(0, 44, -1, 57)
 mini2.Visible = false
 
--- Nút bật/tắt fly ở ngoài frame
-flyToggleBtn.Name = "FlyToggle"
-flyToggleBtn.Parent = main
-flyToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-flyToggleBtn.Size = UDim2.new(0, 60, 0, 30)
-flyToggleBtn.Position = UDim2.new(0.100320168, 0, 0.32, 0) -- Đặt bên trên frame chính
-flyToggleBtn.Font = Enum.Font.SourceSans
-flyToggleBtn.Text = "FLY OFF"
-flyToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-flyToggleBtn.TextSize = 14
-
 -- Biến điều khiển bay
 speeds = 1
 nowe = false
@@ -150,12 +135,12 @@ local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
 
 -- Thông báo khởi động
 game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "FLY GUI V3";
-    Text = "BY XNEO - Added External Fly Toggle";
+    Title = "FLY TAB";
+    Text = "Only Fly Function";
     Icon = "rbxthumb://type=Asset&id=5107182114&w=150&h=150"
 })
 
--- Hàm bật/tắt fly (dùng chung)
+-- Hàm bật/tắt fly
 local function toggleFly()
     if nowe == true then
         -- Tắt fly
@@ -176,8 +161,6 @@ local function toggleFly()
         speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics,true)
         speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming,true)
         speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
-        flyToggleBtn.Text = "FLY OFF"
-        flyToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
     else
         -- Bật fly
         nowe = true
@@ -216,20 +199,16 @@ local function toggleFly()
         speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics,false)
         speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming,false)
         speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
-        flyToggleBtn.Text = "FLY ON"
-        flyToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
     end
     
-    -- Phần xử lý cơ chế bay (giữ nguyên code cũ)
+    -- Xử lý cơ chế bay R6
     if game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
         local plr = game.Players.LocalPlayer
         local torso = plr.Character.Torso
-        local flying = true
-        local deb = true
         local ctrl = {f = 0, b = 0, l = 0, r = 0}
         local lastctrl = {f = 0, b = 0, l = 0, r = 0}
         local maxspeed = 50
-        local speed = 0
+        local speedVal = 0
         local bg = Instance.new("BodyGyro", torso)
         bg.P = 9e4
         bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
@@ -240,46 +219,38 @@ local function toggleFly()
         if nowe == true then
             plr.Character.Humanoid.PlatformStand = true
         end
-        while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
+        while nowe == true do
             game:GetService("RunService").RenderStepped:Wait()
             if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
-                speed = speed+.5+(speed/maxspeed)
-                if speed > maxspeed then
-                    speed = maxspeed
-                end
-            elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
-                speed = speed-1
-                if speed < 0 then
-                    speed = 0
-                end
+                speedVal = speedVal + 0.5 + (speedVal/maxspeed)
+                if speedVal > maxspeed then speedVal = maxspeed end
+            elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speedVal ~= 0 then
+                speedVal = speedVal - 1
+                if speedVal < 0 then speedVal = 0 end
             end
             if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
-                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*0.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speedVal
                 lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
-            elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
-                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+            elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speedVal ~= 0 then
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*0.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speedVal
             else
                 bv.velocity = Vector3.new(0,0,0)
             end
-            bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
+            bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speedVal/maxspeed),0,0)
         end
-        ctrl = {f = 0, b = 0, l = 0, r = 0}
-        lastctrl = {f = 0, b = 0, l = 0, r = 0}
-        speed = 0
         bg:Destroy()
         bv:Destroy()
         plr.Character.Humanoid.PlatformStand = false
         game.Players.LocalPlayer.Character.Animate.Disabled = false
         tpwalking = false
     else
+        -- Xử lý cơ chế bay R15
         local plr = game.Players.LocalPlayer
         local UpperTorso = plr.Character.UpperTorso
-        local flying = true
-        local deb = true
         local ctrl = {f = 0, b = 0, l = 0, r = 0}
         local lastctrl = {f = 0, b = 0, l = 0, r = 0}
         local maxspeed = 50
-        local speed = 0
+        local speedVal = 0
         local bg = Instance.new("BodyGyro", UpperTorso)
         bg.P = 9e4
         bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
@@ -290,32 +261,25 @@ local function toggleFly()
         if nowe == true then
             plr.Character.Humanoid.PlatformStand = true
         end
-        while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
+        while nowe == true do
             wait()
             if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
-                speed = speed+.5+(speed/maxspeed)
-                if speed > maxspeed then
-                    speed = maxspeed
-                end
-            elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
-                speed = speed-1
-                if speed < 0 then
-                    speed = 0
-                end
+                speedVal = speedVal + 0.5 + (speedVal/maxspeed)
+                if speedVal > maxspeed then speedVal = maxspeed end
+            elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speedVal ~= 0 then
+                speedVal = speedVal - 1
+                if speedVal < 0 then speedVal = 0 end
             end
             if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
-                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*0.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speedVal
                 lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
-            elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
-                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+            elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speedVal ~= 0 then
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*0.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speedVal
             else
                 bv.velocity = Vector3.new(0,0,0)
             end
-            bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
+            bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speedVal/maxspeed),0,0)
         end
-        ctrl = {f = 0, b = 0, l = 0, r = 0}
-        lastctrl = {f = 0, b = 0, l = 0, r = 0}
-        speed = 0
         bg:Destroy()
         bv:Destroy()
         plr.Character.Humanoid.PlatformStand = false
@@ -324,13 +288,10 @@ local function toggleFly()
     end
 end
 
--- Gán sự kiện cho nút fly trong frame (giữ nguyên)
+-- Gán sự kiện
 onof.MouseButton1Down:connect(toggleFly)
 
--- Gán sự kiện cho nút fly ngoài frame
-flyToggleBtn.MouseButton1Down:connect(toggleFly)
-
--- Các chức năng UP/DOWN (giữ nguyên)
+-- Nút UP
 local tis
 up.MouseButton1Down:connect(function()
     tis = up.MouseEnter:connect(function()
@@ -347,6 +308,7 @@ up.MouseLeave:connect(function()
     end
 end)
 
+-- Nút DOWN
 local dis
 down.MouseButton1Down:connect(function()
     dis = down.MouseEnter:connect(function()
@@ -363,12 +325,7 @@ down.MouseLeave:connect(function()
     end
 end)
 
-game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
-    wait(0.7)
-    game.Players.LocalPlayer.Character.Humanoid.PlatformStand = false
-    game.Players.LocalPlayer.Character.Animate.Disabled = false
-end)
-
+-- Tăng tốc độ
 plus.MouseButton1Down:connect(function()
     speeds = speeds + 1
     speed.Text = speeds
@@ -390,6 +347,7 @@ plus.MouseButton1Down:connect(function()
     end
 end)
 
+-- Giảm tốc độ
 mine.MouseButton1Down:connect(function()
     if speeds == 1 then
         speed.Text = 'cannot be less than 1'
@@ -417,10 +375,12 @@ mine.MouseButton1Down:connect(function()
     end
 end)
 
+-- Đóng GUI
 closebutton.MouseButton1Click:Connect(function()
     main:Destroy()
 end)
 
+-- Thu nhỏ GUI
 mini.MouseButton1Click:Connect(function()
     up.Visible = false
     down.Visible = false
@@ -430,10 +390,11 @@ mini.MouseButton1Click:Connect(function()
     mine.Visible = false
     mini.Visible = false
     mini2.Visible = true
-    main.Frame.BackgroundTransparency = 1
+    Frame.BackgroundTransparency = 1
     closebutton.Position = UDim2.new(0, 0, -1, 57)
 end)
 
+-- Phục hồi GUI
 mini2.MouseButton1Click:Connect(function()
     up.Visible = true
     down.Visible = true
@@ -443,6 +404,13 @@ mini2.MouseButton1Click:Connect(function()
     mine.Visible = true
     mini.Visible = true
     mini2.Visible = false
-    main.Frame.BackgroundTransparency = 0
+    Frame.BackgroundTransparency = 0
     closebutton.Position = UDim2.new(0, 0, -1, 27)
+end)
+
+-- Xử lý khi respawn
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
+    wait(0.7)
+    game.Players.LocalPlayer.Character.Humanoid.PlatformStand = false
+    game.Players.LocalPlayer.Character.Animate.Disabled = false
 end)
